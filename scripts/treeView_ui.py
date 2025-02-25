@@ -1,36 +1,99 @@
-import sys
-from PySide6 import QtCore, QtWidgets
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QTreeView, QPushButton
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QFont, QColor
+from PySide6.QtCore import Qt
+import os
 
-# class TreeViewWindow(QtWidgets.QWidget):
-#     def __init__(self):
-#         super().__init__()
+class DirModel(QStandardItem):
+    def __init__(self, text="", font_size=8):
+        super().__init__()
+        font = QFont("Open Sans", font_size)
+        font.setBold(True)
+        self.setFont(font)
+        self.setText(text)
+        self.setEditable(False)
+        self.setData("dir", Qt.UserRole)
 
-#         self.setWindowTitle("Tree View")
-#         self.setGeometry(100,100,400,300)
+class FileModel(QStandardItem):
+    def __init__(self, text="", font_size=8):
+        super().__init__()
+        font = QFont("Open Sans", font_size)
+        self.setFont(font)
+        self.setText(text)
+        self.setEditable(False)
+        self.setData("file", Qt.UserRole)
 
-class TreeViewWindow(QtWidgets.QMainWindow):
+class TreeViewWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("Tree View")
-        self.setGeometry(100,100,400,300)
+        self.setGeometry(100,100,400,600)
+
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
 
         # add menus
-        fileMenu = self.menuBar().addMenu("File")
-        fileMenu.addAction("Close", self.close)
+        file_menu = self.menuBar().addMenu("File")
+        file_menu.addAction("Close", self.close)
 
-        editMenu = self.menuBar().addMenu("Edit")
-        editMenu.addAction("Undo", self.undo)
-        editMenu.addAction("Redo", self.redo)
-        editMenu.addSeparator()
-        editMenu.addAction("Cut", self.undo)
-        editMenu.addAction("Copy", self.undo)
-        editMenu.addAction("Paste", self.undo)
+        edit_menu = self.menuBar().addMenu("Edit")
+        edit_menu.addAction("Undo", self.undo)
+        edit_menu.addAction("Redo", self.redo)
+        edit_menu.addSeparator()
+        edit_menu.addAction("Cut", self.undo)
+        edit_menu.addAction("Copy", self.undo)
+        edit_menu.addAction("Paste", self.undo)
+
+        view_menu = self.menuBar().addMenu("View")
+        view_menu.addAction("Sort Ascending", lambda : self.sort_tree(tree_model, Qt.AscendingOrder))
+        view_menu.addAction("Sort Descending", lambda : self.sort_tree(tree_model, Qt.DescendingOrder))
+
+        # add tree
+        tree_view = QTreeView()
+        tree_view.setHeaderHidden(True)
+        tree_view.clicked.connect(self.print_selected)
+
+        tree_model = QStandardItemModel()
+        root_node = tree_model.invisibleRootItem()
         
+        # populate tree
+        path = "C:/Users/janbo/Documents/Projekty/practice/houdini/td/hda-management/_pipeline/_treeView/"
+        root = root_node
 
-        central_widget = QtWidgets.QLabel("This is a window label.", self)
-        # central_widget.setAlignment(QtCore.Qt.AlignmentFlag())
-        self.setCentralWidget(central_widget)
+        def list_dir(path, root):
+            for i in os.listdir(path):
+                i_path = f"{path}{i}"
+                if os.path.isdir(i_path):
+                    dir = DirModel(i)
+                    root.appendRow(dir)
+                    list_dir(f"{i_path}/", dir)
+                if os.path.isfile(i_path):
+                    file = FileModel(i)
+                    root.appendRow(file)
+
+        list_dir(path, root)
+
+        tree_model.sort(0, order=Qt.AscendingOrder)
+
+        tree_view.setModel(tree_model)
+
+        # add buttons
+        print_button = QPushButton("Print Selection")
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addWidget(print_button)
+
+        # main layout
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(tree_view)
+        main_layout.addLayout(buttons_layout)
+        central_widget.setLayout(main_layout)
+        
+    def sort_tree(self, model, order):
+        model.sort(0, order)
+
+    def print_selected(self, value):
+        print(value.data())
+        print(value.parent().data())
 
     def undo(self):
         print("Pressed undo!")
@@ -38,19 +101,3 @@ class TreeViewWindow(QtWidgets.QMainWindow):
     def redo(self):
         print("Pressed redo!")
 
-def main():
-    app = QtWidgets.QApplication(sys.argv)
-
-    # if QtCore.QCoreApplication.instance():
-    #     app.quit()
-
-    window = TreeViewWindow()
-    window.show()
-
-    sys.exit(app.exec())
-
-def loadTest():
-    print("treeView module is loaded")
-
-if __name__ == "__main__":
-    main()
