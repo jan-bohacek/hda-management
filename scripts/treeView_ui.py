@@ -21,6 +21,11 @@ class FileModel(QStandardItem):
         self.setText(text)
         self.setEditable(False)
         self.setData("file", Qt.UserRole)
+        self.setCheckable(True)
+        self.checkSta
+
+    def checked_color(self):
+        self.setForeground(QColor(1,0,0))
 
 class TreeViewWindow(QMainWindow):
     def __init__(self):
@@ -51,7 +56,7 @@ class TreeViewWindow(QMainWindow):
         # add tree
         tree_view = QTreeView()
         tree_view.setHeaderHidden(True)
-        tree_view.clicked.connect(self.print_selected)
+        # tree_view.clicked.connect(self.print_selected)
 
         tree_model = QStandardItemModel()
         root_node = tree_model.invisibleRootItem()
@@ -79,6 +84,7 @@ class TreeViewWindow(QMainWindow):
 
         # add buttons
         print_button = QPushButton("Print Selection")
+        print_button.pressed.connect(lambda : self.print_checked(tree_model, root))
         buttons_layout = QHBoxLayout()
         buttons_layout.addWidget(print_button)
 
@@ -88,12 +94,30 @@ class TreeViewWindow(QMainWindow):
         main_layout.addLayout(buttons_layout)
         central_widget.setLayout(main_layout)
         
+    ### ACTIONS
     def sort_tree(self, model, order):
         model.sort(0, order)
 
+    # print selected items
     def print_selected(self, value):
         print(value.data())
         print(value.parent().data())
+
+    # print checked items
+    def print_checked(self, model, root):
+        checked_items = []
+        stack = [root]
+        while len(stack) > 0:
+            item = stack.pop(0)
+            if item.checkState() == Qt.CheckState.Checked:
+                checked_items.append(item)
+            for i in range(item.rowCount()):
+                child = item.child(i)
+                stack.append(child)
+        # print checked
+        print("SELECTED ITEMS:")
+        for i in checked_items:
+            print(i.text())
 
     def undo(self):
         print("Pressed undo!")
