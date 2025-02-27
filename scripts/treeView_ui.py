@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QTreeView, QPushButton
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QTreeView, QPushButton, QMessageBox, QSizePolicy
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QFont, QColor
 from PySide6.QtCore import Qt
 import os
@@ -22,7 +22,6 @@ class FileModel(QStandardItem):
         self.setEditable(False)
         self.setData("file", Qt.UserRole)
         self.setCheckable(True)
-        self.checkSta
 
     def checked_color(self):
         self.setForeground(QColor(1,0,0))
@@ -62,7 +61,8 @@ class TreeViewWindow(QMainWindow):
         root_node = tree_model.invisibleRootItem()
         
         # populate tree
-        path = "C:/Users/janbo/Documents/Projekty/practice/houdini/td/hda-management/_pipeline/_treeView/"
+        # path = "C:/Users/janbo/Documents/Projekty/practice/houdini/td/hda-management/_pipeline/_treeView/"
+        path = f"{os.getcwd().replace("\\", "/")}/_treeView/" 
         root = root_node
 
         def list_dir(path, root):
@@ -84,7 +84,7 @@ class TreeViewWindow(QMainWindow):
 
         # add buttons
         print_button = QPushButton("Print Selection")
-        print_button.pressed.connect(lambda : self.print_checked(tree_model, root))
+        print_button.pressed.connect(lambda : self.print_checked(root))
         buttons_layout = QHBoxLayout()
         buttons_layout.addWidget(print_button)
 
@@ -104,7 +104,7 @@ class TreeViewWindow(QMainWindow):
         print(value.parent().data())
 
     # print checked items
-    def print_checked(self, model, root):
+    def print_checked(self, root):
         checked_items = []
         stack = [root]
         while len(stack) > 0:
@@ -115,9 +115,13 @@ class TreeViewWindow(QMainWindow):
                 child = item.child(i)
                 stack.append(child)
         # print checked
-        print("SELECTED ITEMS:")
-        for i in checked_items:
-            print(i.text())
+        message = QMessageBox()
+        message.setFixedWidth(500)
+        message.setWindowTitle("Selected items:")
+        sel = [f"{x.text()}\n" for x in checked_items]
+        text = "".join(sel)
+        message.setText(text)
+        message.exec_()
 
     def undo(self):
         print("Pressed undo!")
